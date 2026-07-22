@@ -16,3 +16,5 @@ models/*.onnx
 models/*.engine
 *.bag
 *.db3
+*.svg
+*.png
