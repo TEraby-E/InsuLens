@@ -1,9 +1,7 @@
-# Contributing
+# 贡献指南
 
-Use ROS 2 package conventions and keep generated datasets, build artifacts and
-model binaries out of normal Git history. Branch from `main`, use focused
-commits, run `python -m compileall src`, and describe simulation or model
-changes in the pull request.
+请遵循 ROS 2 软件包约定，并将生成的数据集、构建产物和模型二进制文件排除在普通
+Git 历史之外。请从 `main` 分支创建开发分支，保持提交聚焦；提交前运行
+`python -m compileall src`，并在拉取请求中说明仿真或模型的改动。
 
-Recommended commit prefixes are `feat:`, `fix:`, `docs:`, `test:` and `chore:`.
-
+建议使用的提交前缀为：`feat:`、`fix:`、`docs:`、`test:` 和 `chore:`。

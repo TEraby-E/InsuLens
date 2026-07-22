@@ -27,6 +27,7 @@ def generate_launch_description() -> LaunchDescription:
             ),
             DeclareLaunchArgument("device", default_value="cuda:0"),
             DeclareLaunchArgument("visualize", default_value="true"),
+            DeclareLaunchArgument("monitor", default_value="false"),
             Node(
                 package="doggo_perception",
                 executable="image_source",
@@ -55,6 +56,12 @@ def generate_launch_description() -> LaunchDescription:
                 condition=IfCondition(LaunchConfiguration("visualize")),
                 output="screen",
             ),
+            Node(
+                package="doggo_perception",
+                executable="inspection_monitor",
+                name="inspection_monitor",
+                condition=IfCondition(LaunchConfiguration("monitor")),
+                output="screen",
+            ),
         ]
     )
-

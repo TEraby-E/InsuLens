@@ -24,6 +24,7 @@ setup(
         "console_scripts": [
             "detector = doggo_perception.detector_node:main",
             "image_source = doggo_perception.image_source:main",
+            "inspection_monitor = doggo_perception.inspection_monitor:main",
             "train_yolov10 = doggo_perception.train:main",
         ],
     },

@@ -29,6 +29,7 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("device", default_value="cuda:0"),
             DeclareLaunchArgument("gui", default_value="true"),
             DeclareLaunchArgument("visualize", default_value="false"),
+            DeclareLaunchArgument("monitor", default_value="false"),
             SetEnvironmentVariable(
                 "GAZEBO_MODEL_PATH",
                 models
@@ -68,6 +69,13 @@ def generate_launch_description() -> LaunchDescription:
                 executable="rqt_image_view",
                 arguments=["/doggo/detection_image"],
                 condition=IfCondition(LaunchConfiguration("visualize")),
+                output="screen",
+            ),
+            Node(
+                package="doggo_perception",
+                executable="inspection_monitor",
+                name="inspection_monitor",
+                condition=IfCondition(LaunchConfiguration("monitor")),
                 output="screen",
             ),
         ]
