@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <world name="transmission_line_inspection">
+    <gravity>0 0 -9.81</gravity>
+    <physics name="default_physics" type="ode">
+      <real_time_update_rate>500</real_time_update_rate>
+      <max_step_size>0.002</max_step_size>
+    </physics>
+    <scene>
+      <ambient>0.5 0.5 0.5 1</ambient>
+      <background>0.55 0.73 0.92 1</background>
+      <shadows>true</shadows>
+    </scene>
+    <include><uri>model://sun</uri></include>
+    <include><uri>model://ground_plane</uri></include>
+
+    <include><uri>model://transmission_tower</uri><name>tower_0</name><pose>0 0 0 0 0 0</pose></include>
+    <include><uri>model://transmission_tower</uri><name>tower_1</name><pose>15 0 0 0 0 0</pose></include>
+    <include><uri>model://transmission_tower</uri><name>tower_2</name><pose>30 0 0 0 0 0</pose></include>
+
+    <include><uri>model://insulator</uri><name>insulator_0_front</name><pose>0 -3 6.45 0 0 0</pose></include>
+    <include><uri>model://insulator</uri><name>insulator_0_back</name><pose>0 3 6.45 0 0 0</pose></include>
+    <include><uri>model://insulator</uri><name>insulator_1_front</name><pose>15 -3 6.45 0 0 0</pose></include>
+    <include><uri>model://insulator</uri><name>insulator_1_back</name><pose>15 3 6.45 0 0 0</pose></include>
+    <include><uri>model://insulator</uri><name>insulator_2_front</name><pose>30 -3 6.45 0 0 0</pose></include>
+    <include><uri>model://insulator</uri><name>insulator_2_back</name><pose>30 3 6.45 0 0 0</pose></include>
+
+    <model name="conductors">
+      <static>true</static>
+      <link name="wires">
+        <visual name="front_low"><pose>15 -3 5.25 0 1.570796 0</pose><geometry><cylinder><radius>0.035</radius><length>44</length></cylinder></geometry><material><diffuse>0.12 0.12 0.12 1</diffuse></material></visual>
+        <visual name="back_low"><pose>15 3 5.25 0 1.570796 0</pose><geometry><cylinder><radius>0.035</radius><length>44</length></cylinder></geometry><material><diffuse>0.12 0.12 0.12 1</diffuse></material></visual>
+        <visual name="front_high"><pose>15 -2.2 10.4 0 1.570796 0</pose><geometry><cylinder><radius>0.025</radius><length>44</length></cylinder></geometry><material><diffuse>0.15 0.15 0.15 1</diffuse></material></visual>
+        <visual name="back_high"><pose>15 2.2 10.4 0 1.570796 0</pose><geometry><cylinder><radius>0.025</radius><length>44</length></cylinder></geometry><material><diffuse>0.15 0.15 0.15 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <include>
+      <uri>model://inspection_drone</uri>
+      <name>inspection_drone</name>
+      <pose>-5 -11 7.2 0 0 0</pose>
+    </include>
+  </world>
+</sdf>
+

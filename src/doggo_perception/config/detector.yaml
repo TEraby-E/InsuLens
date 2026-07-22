@@ -1,0 +1,15 @@
+yolov10_insulator_detector:
+  ros__parameters:
+    model_path: /root/doggo/models/insulator_defect_yolov10s.pt
+    image_topic: /doggo/camera/image_raw
+    annotated_topic: /doggo/detection_image
+    detections_topic: /doggo/detections
+    confidence: 0.35
+    iou: 0.55
+    image_size: 768
+    device: cuda:0
+    frame_stride: 1
+    defect_classes: [missing_disc]
+    save_defect_evidence: true
+    evidence_dir: /root/doggo/inspection_results
+    evidence_cooldown_sec: 2.0

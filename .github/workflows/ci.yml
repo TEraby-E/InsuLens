@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Check Python syntax
+        run: python -m compileall -q src
+      - name: Check XML syntax
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libxml2-utils
+          find src -type f \( -name '*.xml' -o -name '*.sdf' -o -name '*.world' \) -print0 | xargs -0 -n1 xmllint --noout
+
