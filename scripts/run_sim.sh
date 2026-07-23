@@ -14,9 +14,9 @@ if [[ ! -f "${MODEL_PATH}" ]]; then
 fi
 
 if command -v xvfb-run >/dev/null 2>&1 && [[ -z "${DISPLAY:-}" ]]; then
-  exec xvfb-run -a ros2 launch doggo_bringup inspection_sim.launch.py \
+  exec xvfb-run -a ros2 launch insulens_bringup inspection_sim.launch.py \
     model_path:="${MODEL_PATH}" device:=cuda:0 gui:=false visualize:=false
 fi
 
-exec ros2 launch doggo_bringup inspection_sim.launch.py \
+exec ros2 launch insulens_bringup inspection_sim.launch.py \
   model_path:="${MODEL_PATH}" device:=cuda:0 gui:=true visualize:=true

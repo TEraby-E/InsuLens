@@ -9,6 +9,12 @@ if [[ ! -f /opt/ros/humble/setup.bash ]]; then
   exit 1
 fi
 
+if [[ -f "${VENV_DIR}/bin/activate" ]] && \
+  ! grep -Fq "VIRTUAL_ENV=${VENV_DIR}" "${VENV_DIR}/bin/activate"; then
+  echo "Virtual environment was created at a different project path; recreating it."
+  rm -rf -- "${VENV_DIR}"
+fi
+
 if [[ ! -f "${VENV_DIR}/bin/activate" ]]; then
   if [[ -d "${VENV_DIR}" ]]; then
     rm -rf -- "${VENV_DIR}"

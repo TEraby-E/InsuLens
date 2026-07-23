@@ -8,8 +8,10 @@ source "${PROJECT_DIR}/.venv/bin/activate"
 source "${PROJECT_DIR}/install/setup.bash"
 
 if command -v xvfb-run >/dev/null 2>&1 && [[ -z "${DISPLAY:-}" ]]; then
-  exec xvfb-run -a ros2 launch doggo_gazebo generate_dataset.launch.py \
+  exec xvfb-run -a ros2 launch insulens_gazebo generate_dataset.launch.py \
+    output_dir:="${PROJECT_DIR}/datasets/insulator_sim" \
     gui:=false num_samples:="${SAMPLE_COUNT}"
 fi
-exec ros2 launch doggo_gazebo generate_dataset.launch.py \
+exec ros2 launch insulens_gazebo generate_dataset.launch.py \
+  output_dir:="${PROJECT_DIR}/datasets/insulator_sim" \
   gui:=true num_samples:="${SAMPLE_COUNT}"

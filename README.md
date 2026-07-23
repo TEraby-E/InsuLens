@@ -67,9 +67,9 @@ ROS 2 软件包职责如下。
 
 | 软件包 | 职责 | 可执行入口 |
 |---|---|---|
-| `InsuLens_gazebo` | Gazebo 世界、模型、自动标注数据生成和自动往返巡检 | `generate_dataset`、`patrol` |
-| `InsuLens_perception` | YOLOv10 训练、ROS 2 检测、真实媒体发布和终端监视 | `train_yolov10`、`detector`、`image_source`、`inspection_monitor` |
-| `InsuLens_bringup` | 完整仿真巡检与真实图片/视频推理启动编排 | `inspection_sim.launch.py`、`real_image_demo.launch.py` |
+| `insulens_gazebo` | Gazebo 世界、模型、自动标注数据生成和自动往返巡检 | `generate_dataset`、`patrol` |
+| `insulens_perception` | YOLOv10 训练、ROS 2 检测、真实媒体发布和终端监视 | `train_yolov10`、`detector`、`image_source`、`inspection_monitor` |
+| `insulens_bringup` | 完整仿真巡检与真实图片/视频推理启动编排 | `inspection_sim.launch.py`、`real_image_demo.launch.py` |
 
 ## 环境与安装
 
@@ -147,7 +147,7 @@ datasets/insulator_sim/
 如需直接指定输出目录、样本数、种子或窗口开关，可使用：
 
 ```bash
-ros2 launch InsuLens_gazebo generate_dataset.launch.py \
+ros2 launch insulens_gazebo generate_dataset.launch.py \
   output_dir:=/data/insulator_sim num_samples:=2000 seed:=42 gui:=false
 ```
 
@@ -171,7 +171,7 @@ models/insulator_yolov10s.pt
 也可直接调用训练入口以覆盖全部参数：
 
 ```bash
-ros2 run InsuLens_perception train_yolov10 --help
+ros2 run insulens_perception train_yolov10 --help
 ```
 
 可配置参数为 `--data`、`--model`、`--epochs`、`--imgsz`、`--batch`、`--device`、
@@ -253,7 +253,7 @@ models/insulator_defect_yolov10s.pt
 完整启动文件支持下列参数：
 
 ```bash
-ros2 launch InsuLens_bringup inspection_sim.launch.py \
+ros2 launch insulens_bringup inspection_sim.launch.py \
   model_path:=/root/InsuLens/models/insulator_yolov10s.pt \
   device:=cuda:0 gui:=true visualize:=true monitor:=true
 ```
@@ -269,13 +269,13 @@ YOLOv10 检测节点，以及可选图像窗口和监视器。巡检节点默认
 58 秒，并在每个单程结束后反向。单独启动时可覆盖其参数：
 
 ```bash
-ros2 run InsuLens_gazebo patrol --ros-args -p speed:=0.8 -p leg_duration:=45.0
+ros2 run insulens_gazebo patrol --ros-args -p speed:=0.8 -p leg_duration:=45.0
 ```
 
 ### 图片、目录或视频检测
 
 ```bash
-ros2 launch InsuLens_bringup real_image_demo.launch.py \
+ros2 launch insulens_bringup real_image_demo.launch.py \
   source:=/path/to/image_or_directory_or_video \
   model_path:=/root/InsuLens/models/insulator_defect_yolov10s.pt \
   device:=cuda:0 visualize:=true monitor:=true
@@ -288,7 +288,7 @@ ros2 launch InsuLens_bringup real_image_demo.launch.py \
 直接启动媒体源时，可设置来源、发布话题、帧编号、发布频率和循环开关：
 
 ```bash
-ros2 run InsuLens_perception image_source --ros-args \
+ros2 run insulens_perception image_source --ros-args \
   -p source:=/path/to/media -p topic:=/InsuLens/real_camera/image_raw \
   -p frame_id:=real_camera_optical_frame -p fps:=5.0 -p loop:=true
 ```
@@ -298,7 +298,7 @@ ros2 run InsuLens_perception image_source --ros-args \
 检测器可订阅任意 `sensor_msgs/Image` 话题。只启动检测器并指定相机话题：
 
 ```bash
-ros2 launch InsuLens_perception detector.launch.py \
+ros2 launch insulens_perception detector.launch.py \
   model_path:=/root/InsuLens/models/insulator_defect_yolov10s.pt \
   device:=cuda:0 image_topic:=/your_camera/image_raw
 ```
@@ -316,7 +316,7 @@ CPU。若模型文件不存在，节点会终止并提示先训练或提供正�
 也可以在已运行的系统中单独启动，并调整统计周期或订阅话题：
 
 ```bash
-ros2 run InsuLens_perception inspection_monitor --ros-args \
+ros2 run insulens_perception inspection_monitor --ros-args \
   -p status_period_sec:=2.0 \
   -p detections_topic:=/InsuLens/detections \
   -p alerts_topic:=/InsuLens/defect_alerts \
@@ -401,11 +401,11 @@ JPG 是带框图像，JSON 是该缺陷事件的告警载荷。证据保存冷�
 ## 参数说明
 
 检测器的默认参数位于
-`src/InsuLens_perception/config/detector.yaml`；启动文件可通过 ROS 参数覆盖。
+`src/insulens_perception/config/detector.yaml`；启动文件可通过 ROS 参数覆盖。
 
 | 参数 | 默认值 | 含义 |
 |---|---:|---|
-| `model_path` | `/root/InsuLens/models/insulator_defect_yolov10s.pt` | YOLOv10 权重文件路径。 |
+| `model_path` | `auto` | 自动查找工作空间 `models/insulator_defect_yolov10s.pt`；也可指定权重绝对路径。 |
 | `image_topic` | `/InsuLens/camera/image_raw` | 输入图像话题。 |
 | `annotated_topic` | `/InsuLens/detection_image` | 带框图像输出话题。 |
 | `detections_topic` | `/InsuLens/detections` | 检测 JSON 输出话题。 |
@@ -416,18 +416,36 @@ JPG 是带框图像，JSON 是该缺陷事件的告警载荷。证据保存冷�
 | `frame_stride` | `1` | 每隔多少输入帧执行一次检测。 |
 | `defect_classes` | `[missing_disc]` | 触发告警和证据保存的类别集合。 |
 | `save_defect_evidence` | `true` | 是否保存缺陷证据。 |
-| `evidence_dir` | `/root/InsuLens/inspection_results` | 证据目录。 |
+| `evidence_dir` | `inspection_results` | 证据目录；相对路径基于节点启动时的工作目录。 |
 | `evidence_cooldown_sec` | `2.0` | 同类证据的最小保存间隔，单位为秒。 |
 
 示例：降低检测频率、仅发布结果而不落盘：
 
 ```bash
-ros2 run InsuLens_perception detector --ros-args \
+ros2 run insulens_perception detector --ros-args \
   -p image_topic:=/your_camera/image_raw -p frame_stride:=3 \
   -p save_defect_evidence:=false -p device:=cpu
 ```
 
+该命令会自动查找工作空间 `models/insulator_defect_yolov10s.pt`。如果模型位于其他
+位置，可设置环境变量 `INSULENS_MODEL_PATH`，或增加
+`-p model_path:=/absolute/path/to/model.pt`。
+
 ## 输出、模型与可追溯性
+
+### 可视化训练成果
+
+仓库中的训练曲线、PR 曲线、混淆矩阵和验证集预测图可以汇总为一个自包含 HTML
+报告，适合演示、答辩或直接分享：
+
+```bash
+cd /root/InsuLens
+source .venv/bin/activate
+python scripts/generate_training_report.py
+```
+
+报告输出到 `reports/training_report.html`。报告中的图片已嵌入 HTML，无需连同
+`runs/` 目录一起复制；点击图表可以放大查看。
 
 | 产物 | 默认位置 | 生成方式 |
 |---|---|---|
@@ -449,20 +467,20 @@ ONNX/TensorRT 文件、ROS bag、数据库和巡检证据。发布模型时应�
 ```text
 InsuLens/
 ├── src/
-│   ├── InsuLens_gazebo/
-│   │   ├── InsuLens_gazebo/dataset_generator.py   # 自动标注与仿真数据保存
-│   │   ├── InsuLens_gazebo/patrol.py              # 自动往返巡检
+│   ├── insulens_gazebo/
+│   │   ├── insulens_gazebo/dataset_generator.py   # 自动标注与仿真数据保存
+│   │   ├── insulens_gazebo/patrol.py              # 自动往返巡检
 │   │   ├── launch/generate_dataset.launch.py
 │   │   ├── worlds/                              # 巡检与数据生成世界
 │   │   └── models/                              # 杆塔、绝缘子、巡检载体
-│   ├── InsuLens_perception/
-│   │   ├── InsuLens_perception/detector_node.py   # YOLOv10 ROS 2 检测器
-│   │   ├── InsuLens_perception/image_source.py    # 单图/目录/视频发布器
-│   │   ├── InsuLens_perception/inspection_monitor.py
-│   │   ├── InsuLens_perception/train.py           # 通用训练入口
+│   ├── insulens_perception/
+│   │   ├── insulens_perception/detector_node.py   # YOLOv10 ROS 2 检测器
+│   │   ├── insulens_perception/image_source.py    # 单图/目录/视频发布器
+│   │   ├── insulens_perception/inspection_monitor.py
+│   │   ├── insulens_perception/train.py           # 通用训练入口
 │   │   ├── config/detector.yaml
 │   │   └── launch/detector.launch.py
-│   └── InsuLens_bringup/
+│   └── insulens_bringup/
 │       └── launch/                             # 完整仿真与真实媒体启动文件
 ├── scripts/
 │   ├── setup_env.sh

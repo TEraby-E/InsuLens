@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>insulens_bringup</name>
+  <version>0.1.0</version>
+  <description>Top-level launch and configuration for insulens.</description>
+  <maintainer email="maintainers@example.com">insulens contributors</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>insulens_gazebo</exec_depend>
+  <exec_depend>insulens_perception</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
+

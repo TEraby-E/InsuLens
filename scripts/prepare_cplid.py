@@ -22,12 +22,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--source",
         default=(
-            "/root/doggo/datasets/raw/cplid/"
+            "/root/InsuLens/datasets/raw/cplid/"
             "InsulatorDataSet-master"
         ),
     )
     parser.add_argument(
-        "--output", default="/root/doggo/datasets/cplid_yolo"
+        "--output", default="/root/InsuLens/datasets/cplid_yolo"
     )
     parser.add_argument("--val-ratio", type=float, default=0.2)
     parser.add_argument("--seed", type=int, default=42)
@@ -183,4 +183,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

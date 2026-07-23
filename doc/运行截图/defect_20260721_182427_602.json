@@ -1,0 +1,23 @@
+{
+  "stamp": {
+    "sec": 1784629467,
+    "nanosec": 584497349
+  },
+  "frame_id": "real_camera_optical_frame",
+  "inference_ms": 10.734,
+  "defect_detected": true,
+  "detections": [
+    {
+      "class_id": 1,
+      "class_name": "missing_disc",
+      "is_defect": true,
+      "confidence": 0.918076,
+      "bbox_xyxy": [
+        316.96,
+        501.91,
+        388.64,
+        557.1
+      ]
+    }
+  ]
+}

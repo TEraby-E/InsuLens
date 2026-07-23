@@ -12,7 +12,7 @@ if [[ ! -f "${PROJECT_DIR}/datasets/cplid_yolo/data.yaml" ]]; then
   exit 1
 fi
 
-exec ros2 run doggo_perception train_yolov10 \
+exec ros2 run insulens_perception train_yolov10 \
   --data "${PROJECT_DIR}/datasets/cplid_yolo/data.yaml" \
   --model "${PROJECT_DIR}/models/insulator_yolov10s.pt" \
   --epochs "${EPOCHS}" \
@@ -23,4 +23,3 @@ exec ros2 run doggo_perception train_yolov10 \
   --project "${PROJECT_DIR}/runs" \
   --name insulator_defect_yolov10s \
   --export "${PROJECT_DIR}/models/insulator_defect_yolov10s.pt"
-

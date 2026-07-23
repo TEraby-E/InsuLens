@@ -1,2 +1,0 @@
-"""Launch package for doggo."""
-

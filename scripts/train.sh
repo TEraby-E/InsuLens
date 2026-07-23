@@ -7,7 +7,7 @@ source /opt/ros/humble/setup.bash
 source "${PROJECT_DIR}/.venv/bin/activate"
 source "${PROJECT_DIR}/install/setup.bash"
 
-exec ros2 run doggo_perception train_yolov10 \
+exec ros2 run insulens_perception train_yolov10 \
   --data "${PROJECT_DIR}/datasets/insulator_sim/data.yaml" \
   --model yolov10s.yaml \
   --epochs "${EPOCHS}" \
