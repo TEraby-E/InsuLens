@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>InsuLens · 智能巡检看板</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <p class="eyebrow">INSULENS / ROS2 VISION</p>
+        <h1>绝缘子智能巡检看板</h1>
+      </div>
+      <div class="connection-panel">
+        <label for="ros-url">rosbridge</label>
+        <input id="ros-url" value="ws://localhost:9090" aria-label="rosbridge WebSocket 地址" />
+        <button id="connect">连接</button>
+        <span id="connection-status" class="status offline">未连接</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="metrics" aria-label="实时检测指标">
+        <article><p>检测帧数</p><strong id="frame-count">0</strong><small>有效 JSON 消息</small></article>
+        <article><p>累计目标</p><strong id="object-count">0</strong><small>全部检测类别</small></article>
+        <article><p>缺陷事件</p><strong id="alert-count">0</strong><small>missing_disc 等缺陷类</small></article>
+        <article><p>平均推理</p><strong id="latency">0.0 ms</strong><small>滑动平均 30 帧</small></article>
+      </section>
+
+      <section class="content-grid">
+        <article class="camera-panel">
+          <div class="panel-heading"><h2>实时带框图像</h2><span id="image-status">等待图像</span></div>
+          <canvas id="detection-canvas" width="960" height="540">浏览器不支持 Canvas。</canvas>
+          <p class="hint">订阅 <code>/insulens/detection_image</code>（sensor_msgs/Image）</p>
+        </article>
+        <article class="alerts-panel">
+          <div class="panel-heading"><h2>缺陷告警</h2><button id="clear-alerts" class="secondary">清空</button></div>
+          <ol id="alerts" aria-live="polite"><li class="empty">尚未收到缺陷告警。</li></ol>
+        </article>
+      </section>
+
+      <section class="detections-panel">
+        <div class="panel-heading"><h2>最新检测结果</h2><span id="message-time">等待 ROS2 消息</span></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>类别</th><th>置信度</th><th>状态</th><th>边界框 (x1, y1, x2, y2)</th><th>切片观测</th></tr></thead>
+          <tbody id="detections"><tr><td colspan="5" class="empty">尚无检测结果。</td></tr></tbody>
+        </table></div>
+      </section>
+    </main>
+    <footer>数据源：<code>/insulens/detections</code>、<code>/insulens/defect_alerts</code>、<code>/insulens/detection_image</code></footer>
+    <script src="dashboard.js"></script>
+  </body>
+</html>

@@ -1,0 +1,77 @@
+{
+  "output": "/root/InsuLens/reports/insulens_missing_disc_uav_demo.mp4",
+  "synthetic_sequence": true,
+  "continuous_real_flight": false,
+  "dataset": "/root/InsuLens/datasets/insulator_six_class/images/train",
+  "class_id": 4,
+  "class_name": "missing",
+  "resolution": [
+    1280,
+    720
+  ],
+  "fps": 25,
+  "frames": 370,
+  "duration_seconds": 14.8,
+  "sources": [
+    {
+      "image": "/root/InsuLens/datasets/insulator_six_class/images/train/cplid_defective_075.jpg",
+      "label": "/root/InsuLens/datasets/insulator_six_class/labels/train/cplid_defective_075.txt",
+      "normalized_xywh": [
+        0.579427,
+        0.565972,
+        0.06684,
+        0.074074
+      ]
+    },
+    {
+      "image": "/root/InsuLens/datasets/insulator_six_class/images/train/cplid_defective_083.jpg",
+      "label": "/root/InsuLens/datasets/insulator_six_class/labels/train/cplid_defective_083.txt",
+      "normalized_xywh": [
+        0.375868,
+        0.504051,
+        0.071181,
+        0.068287
+      ]
+    },
+    {
+      "image": "/root/InsuLens/datasets/insulator_six_class/images/train/cplid_defective_109.jpg",
+      "label": "/root/InsuLens/datasets/insulator_six_class/labels/train/cplid_defective_109.txt",
+      "normalized_xywh": [
+        0.420573,
+        0.576968,
+        0.072049,
+        0.065972
+      ]
+    },
+    {
+      "image": "/root/InsuLens/datasets/insulator_six_class/images/train/cplid_defective_031.jpg",
+      "label": "/root/InsuLens/datasets/insulator_six_class/labels/train/cplid_defective_031.txt",
+      "normalized_xywh": [
+        0.628472,
+        0.546875,
+        0.074653,
+        0.065972
+      ]
+    },
+    {
+      "image": "/root/InsuLens/datasets/insulator_six_class/images/train/cplid_defective_114.jpg",
+      "label": "/root/InsuLens/datasets/insulator_six_class/labels/train/cplid_defective_114.txt",
+      "normalized_xywh": [
+        0.379774,
+        0.513889,
+        0.068576,
+        0.076389
+      ]
+    },
+    {
+      "image": "/root/InsuLens/datasets/insulator_six_class/images/train/cplid_defective_100.jpg",
+      "label": "/root/InsuLens/datasets/insulator_six_class/labels/train/cplid_defective_100.txt",
+      "normalized_xywh": [
+        0.601562,
+        0.532986,
+        0.069444,
+        0.077546
+      ]
+    }
+  ]
+}

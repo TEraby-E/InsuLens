@@ -1,5 +1,180 @@
 # InsuLens：ROS 2 + YOLOv10 绝缘子巡检系统
 
+> **Web 巡检交付（图片、视频、报告）**：项目现提供独立于 ROS 的 `FastAPI` Web
+> 应用。它可上传图片或视频，自动读取任意兼容检测模型的类别元数据，执行逐帧跟踪、小目标
+> 切片推理融合，并导出 JSON/CSV 巡检报告。以下「Web 巡检系统」章节是从零复现该交付的完整流程。
+
+## Web 巡检系统
+
+### 1. 模型驱动的动态分类接口
+
+Web API 不再固定类别数量、标签名称或类别顺序。加载 Ultralytics 目标检测权重后，后端读取
+模型的 `names` 元数据并生成 `class_schema`；前端的类别卡片、颜色、统计、报告文本和导出文件
+都由该 schema 动态渲染。仓库内已有模型可直接验证 1 类、2 类和 6 类三种情况：
+
+| 示例权重 | 模型输出类别 |
+| --- | --- |
+| `insulator_yolov10s.pt` | `insulator` |
+| `insulator_defect_yolov10s.pt` | `insulator`, `missing_disc` |
+| `insulator_six_class_yolov10s.pt` | `normal`, `broken`, `crack`, `pollution`, `missing`, `flashover` |
+
+Web 后端的 `InsulatorDetector` 会以指定模型进行全图推理；对大分辨率
+画面再做重叠切片推理，以类感知 NMS 融合结果，专门降低小绝缘子漏检。视频逐帧检测后由
+`IoUTracker` 维护类别一致的 Track ID。统计使用任务期间观察到的唯一轨迹，避免将同一个目标
+在每一帧重复累计。界面实时展示处理 FPS、总数、动态类别数量、每帧检测数据和平均置信度。
+
+接口默认原样保留模型标签，不进行绝缘子业务类别重映射。确有业务需要时，可通过环境变量配置
+类别别名、中文显示名或一个低置信度推断类；这些都是可选元数据，不再是模型接入门槛。模型未
+加载、没有 `names` 元数据，或仅为整图分类任务时，上传巡检才返回 `503`。
+
+### 2. 环境配置
+
+```bash
+git clone <your-repository-url> InsuLens
+cd InsuLens
+python3 -m venv .venv
+source .venv/bin/activate                    # Windows: .venv\Scripts\activate
+python -m pip install --upgrade pip
+# GPU 请先按 PyTorch 官网安装与 CUDA 匹配的 torch/torchvision，再安装本项目依赖。
+pip install -r requirements.txt
+pip install -e src/insulens_perception
+```
+
+运行视频需要 OpenCV 能使用 FFmpeg 或系统的视频编码器；Linux 可安装 `ffmpeg`。验证环境：
+
+```bash
+python -c "import cv2, fastapi, ultralytics; print('runtime ready')"
+```
+
+### 3. 绝缘子五分类数据准备与训练示例
+
+本节是项目自带绝缘子模型的训练流程，不是 Web 前端接口的固定 schema；其他数据集与类别数量
+训练出的目标检测权重同样可以接入前端。
+
+使用 YOLO 数据集布局，所有标签坐标为归一化的 `class x_center y_center width height`：
+
+```text
+datasets/insulator_six_class/
+  images/{train,val}/xxx.jpg
+  labels/{train,val}/xxx.txt
+  data.yaml
+  sources.jsonl
+  dataset_metadata.json
+```
+
+`data.yaml` 必须与该训练任务的标签 ID 一致；Web API 会在加载权重后自动读取这份类别顺序：
+
+```yaml
+path: datasets/insulator_six_class
+train: images/train
+val: images/val
+names: [normal, broken, crack, pollution, missing]
+```
+
+构建器严格复制 CPLID 原图字节并重映射其已有标注，不添加颜色通道、线条、污层、电弧或
+其他像素级渲染。CPLID 上游固定为
+[`InsulatorDataSet@1f6349f`](https://github.com/InsulatorData/InsulatorDataSet/tree/1f6349f619237344d49905090ecf2704505394a4)，
+其可用标注仅映射为 `normal` 与 `missing`。`broken`、`crack`、`pollution` 必须从另行授权、
+可追溯且已标注的真实数据导入；在三类任一缺失时训练入口会主动拒绝训练。`flashover`
+始终不进入训练图片或标签：
+
+```bash
+PYTHONPATH=src/insulens_perception python -m insulens_perception.six_class_dataset \
+  --source datasets/cplid_yolo --output datasets/insulator_six_class \
+  --per-split 120 --seed 42
+```
+
+导入网络数据时，只能使用许可清楚且提供标注的公开数据集；将来源、许可证、类别映射和划分
+写入数据清单，不能把无标注网络图片直接加入监督训练。每类应有独立真实训练/验证/测试样本，
+并按线路、拍摄批次或视频片段划分。使用 `P2 + Coordinate Attention` 小目标版本训练：
+
+```bash
+python -m insulens_perception.train \
+  --data datasets/insulator_six_class/data.yaml \
+  --model yolov10s.pt --small-object-model \
+  --imgsz 960 --epochs 120 --batch 8 --device 0 \
+  --name insulator_five_class_yolov10s \
+  --export models/insulator_five_class_yolov10s.pt
+```
+
+训练后应在独立真实测试集报告五个模型类别的 AP、mAP50-95、召回率和混淆矩阵；另以独立
+闪络案例验证排除式阈值的误报率与漏报率。仅当验收集指标满足现场阈值时才更新 Web 权重。
+
+### 4. 剪枝、轻量化与部署
+
+绝缘子巡检是跨帧重复查找高相似度目标的任务，优化策略为：
+
+1. 采用 P2 检测头、切片推理与检测融合，优先提升小目标召回；
+2. Web 视频使用 IoU 跟踪，稳定 ID 并基于轨迹计数，减少重复业务判定；
+3. 以基线模型为起点对卷积输出通道执行结构化 L2 剪枝，进行恢复微调；
+4. 导出 ONNX（或 TensorRT/OpenVINO）并可进行经代表性校准集验证的 INT8 量化；
+5. 对比剪枝前后的模型大小、每帧延迟、吞吐和五类 mAP/召回，不以单一模型体积作为上线标准。
+
+```bash
+python -m insulens_perception.optimize_model \
+  --weights models/insulator_defect_yolov10s.pt \
+  --data datasets/insulator_fault/data.yaml \
+  --sparsity 0.20 --epochs 25 --imgsz 960 --format onnx --int8
+```
+
+每一个剪枝比例都必须重新执行 `model.val(data=...)`；若 `Missing`、`Damage` 或
+`闪络烧痕` 召回下降超过业务阈值，应降低 `--sparsity` 或保留基线模型。`optimize_model.py`
+输出状态字典和部署工件；生产部署须绑定导出工件、类别映射和相应版本的验证报告。
+
+### 5. 启动 Web 服务
+
+```bash
+# 指向任意兼容的 Ultralytics 目标检测 .pt；类别数与标签名称不限。
+export INSULENS_WEB_MODEL="$PWD/models/insulator_defect_yolov10s.pt"
+python -m insulens_perception.web_app
+# 浏览器打开 http://127.0.0.1:8080
+```
+
+可选环境变量：`PORT=8080` 修改端口；`INSULENS_RESULT_DIR=/data/inspections` 修改报告和
+标注媒体输出目录。ROS 环境仍可按后续原有章节启动，不影响 Web 模式。
+
+模型标签无需修改即可显示。需要业务别名或中文显示名时传入 JSON 对象：
+
+```bash
+export INSULENS_CLASS_ALIASES='{"missing_disc":"missing"}'
+export INSULENS_CLASS_LABELS='{"insulator":"绝缘子","missing":"缺片"}'
+```
+
+低置信度推断类默认关闭，避免对无关模型做错误重分类。需要恢复特定业务规则时显式设置：
+
+```bash
+export INSULENS_INFERRED_CLASS=flashover
+export INSULENS_INFERRED_CLASS_THRESHOLD=0.30
+export INSULENS_INFERENCE_CANDIDATE_CONFIDENCE=0.05
+```
+
+### 6. 图片、视频检测与报告导出
+
+1. 打开 Web 页面，在「上传巡检素材」选择 `jpg/png/bmp` 图片或 `mp4/avi/mov/mkv` 视频；
+2. 点击「开始巡检」。视频会逐帧执行全图/切片检测、NMS 融合和 Track ID 关联；
+3. 完成后查看标注图片/视频、FPS、平均置信度及类别统计；
+4. 点击「导出 JSON 报告」或「导出 CSV 报告」。
+
+每个任务存入 `inspection_results/web/inspection_<UTC时间>_<随机ID>/`。CSV 包含检测数量、
+模型实际类别及数量、平均置信度与 FPS。JSON 额外保存动态 `class_schema`、后端类型、帧数、
+耗时和输出媒体名；视频 JSON 还保存逐帧 `track_id`、边界框、类别和置信度，便于审计与复核。
+
+### 7. 端到端复现和测试
+
+```bash
+# 核心跟踪、报告和既有小目标单元测试
+PYTHONPATH=src/insulens_perception pytest -q src/insulens_perception/test
+
+# 启动服务后另开终端，使用 API 上传复现
+curl -F "upload=@path/to/inspection.mp4" http://127.0.0.1:8080/api/inspect
+curl http://127.0.0.1:8080/api/health
+```
+
+API 成功响应含 `job_id`、`class_schema`、`detection_total`、`category_counts`、`fps`、
+`average_confidence`、`output_media`、`report_json`、`report_csv` 与 `download_base`。
+下载接口为 `/api/jobs/{job_id}/{artifact}`。先在合成或已标注素材上验证全流程，再以独立
+现场测试集确认精度与吞吐后部署。
+
 InsuLens 是一个面向课程实践、算法原型和现场数据预筛的绝缘子视觉巡检项目。它在
 Gazebo Classic 中自动生成并标注绝缘子仿真数据，以 YOLOv10s 完成仿真预训练，
 再使用 CPLID 真实输电场景数据进行仿真到真实场景微调；运行阶段通过 ROS 2 接收
@@ -430,6 +605,68 @@ ros2 run insulens_perception detector --ros-args \
 该命令会自动查找工作空间 `models/insulator_defect_yolov10s.pt`。如果模型位于其他
 位置，可设置环境变量 `INSULENS_MODEL_PATH`，或增加
 `-p model_path:=/absolute/path/to/model.pt`。
+
+## 第二阶段：小目标检测、坐标注意力与 Web 看板
+
+YOLOv10 是 **anchor-free** 检测器。本项目不会生成或替换 anchor；而是通过 GT
+尺度聚类决定 P2 检测头、TAL 实验候选和增强范围。
+
+### 1. 标注尺度分析
+
+```bash
+source install/setup.bash
+ros2 run insulens_perception analyze_small_objects \
+  --data datasets/cplid_yolo/data.yaml --imgsz 768 \
+  --output reports/small_object
+```
+
+命令会生成 `small_object_scale_report.json` 和 Markdown 附录，包含类别统计、K-means++
+尺度簇、P2 建议以及 TAL `topk=6/10/13` 候选。结果仅用于 anchor-free YOLOv10 的
+结构和超参数决策，不输出 anchor 文件。
+
+### 2. P2 + Coordinate Attention 训练和消融
+
+基线继续使用现有的 `yolov10s.yaml`。要训练项目内版本控制的四尺度 P2 + CA 模型，使用：
+
+```bash
+ros2 run insulens_perception train_yolov10 \
+  --data datasets/cplid_yolo/data.yaml --small-object-model \
+  --tal-topk 6 --imgsz 768 --batch 8 --device 0 \
+  --project runs --name insulator_p2_ca_topk6
+```
+
+每次训练会将模型选择和 TAL 候选写入 `small_object_experiment.json`。建议完成
+baseline、`+P2`、`+P2+CA` 与 `topk=6/10/13` 的对照，记录 mAP@0.5、mAP@0.5:0.95、
+AP_small 和 FPS。P2 会增加显存和延迟；低算力部署可直接继续使用基线模型。
+
+### 3. 重叠切片推理
+
+`tiled_inference` 默认关闭，保证当前实时推理链路不变。对无人机高分辨率图像可开启：
+
+```bash
+ros2 run insulens_perception detector --ros-args \
+  -p tiled_inference.enabled:=true \
+  -p tiled_inference.tile_size:=1024 \
+  -p tiled_inference.overlap:=0.20 \
+  -p tiled_inference.fusion_iou:=0.55
+```
+
+节点会将每个切片的检测框恢复到原图坐标，并按类别执行加权框融合；随后仍发布既有
+`/insulens/detections`、`/insulens/defect_alerts`、`/insulens/detection_image` 和证据文件。
+
+### 4. rosbridge Web 看板
+
+安装并启动 `rosbridge_suite` 后，分别启动 ROS 检测演示、WebSocket 桥和静态看板：
+
+```bash
+ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+ros2 launch insulens_perception web_dashboard.launch.py port:=8080
+```
+
+浏览器打开 `http://localhost:8080`，填写 rosbridge 地址（默认 `ws://localhost:9090`）后连接。
+看板会显示连接状态、检测帧数、目标数、推理延迟、缺陷告警、最新检测表格和
+`sensor_msgs/Image` 格式的带框图像。rosbridge 或浏览器不可用时，不影响原有 ROS2
+检测节点、证据保存或 `rqt_image_view` 演示。
 
 ## 输出、模型与可追溯性
 

@@ -5,11 +5,18 @@ yolov10_insulator_detector:
     annotated_topic: /insulens/detection_image
     detections_topic: /insulens/detections
     confidence: 0.35
+    flashover_inference_threshold: 0.30
+    flashover_candidate_confidence: 0.05
     iou: 0.55
     image_size: 768
     device: cuda:0
     frame_stride: 1
-    defect_classes: [missing_disc]
+    defect_classes: [broken, pollution, missing, flashover]
     save_defect_evidence: true
     evidence_dir: inspection_results
     evidence_cooldown_sec: 2.0
+    tiled_inference:
+      enabled: false
+      tile_size: 1024
+      overlap: 0.20
+      fusion_iou: 0.55

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>InsuLens | 通用视觉巡检</title>
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <header><div><p class="eyebrow">MODEL-DRIVEN VISION INSPECTION</p><h1>视觉目标检测与巡检</h1></div><span id="status">检测服务连接中…</span></header>
+    <main>
+      <section class="upload card">
+        <h2>上传巡检素材</h2>
+        <p>支持接入不同类别数量与标签名称的目标检测模型。视频将逐帧检测、融合小目标结果并保持跨帧 Track ID。</p>
+        <p id="model-info" class="muted">正在读取模型类别…</p>
+        <form id="upload-form"><input id="file" type="file" accept="image/*,video/*" required /><button id="submit-button">开始巡检</button></form>
+        <section id="source-preview" class="source-preview hidden" aria-live="polite">
+          <div class="preview-heading"><div><span class="preview-kicker">UPLOAD PREVIEW</span><h3>原始素材预览</h3></div><span id="source-meta" class="muted"></span></div>
+          <div id="source-media" class="source-media"></div>
+          <p id="source-message" class="muted">视频仅在当前浏览器中预览，开始巡检后仍会继续保留。</p>
+        </section>
+        <p id="progress" class="muted">等待上传</p>
+      </section>
+      <section id="result" class="hidden">
+        <div class="metrics"><article class="card"><b id="total">0</b><span>检测数量</span></article><article class="card"><b id="fps">0</b><span>检测速度 FPS</span></article><article class="card"><b id="confidence">0%</b><span>平均置信度</span></article><article class="card"><b id="frames">0</b><span>已处理帧</span></article></div>
+        <div class="grid"><section class="card"><h2>类别统计</h2><div id="counts" class="counts"></div></section><section class="card"><h2>标注结果</h2><div id="preview"></div></section></div>
+        <section class="card"><h2>巡检报告</h2><p id="report-text"></p><div id="downloads" class="downloads"></div></section>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+[console_scripts]
+analyze_small_objects = insulens_perception.analyze_dataset:main
+detector = insulens_perception.detector_node:main
+image_source = insulens_perception.image_source:main
+inspection_monitor = insulens_perception.inspection_monitor:main
+insulens_web = insulens_perception.web_app:main
+optimize_insulens_model = insulens_perception.optimize_model:main
+train_yolov10 = insulens_perception.train:main
